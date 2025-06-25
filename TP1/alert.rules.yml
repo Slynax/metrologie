@@ -1,0 +1,52 @@
+groups:
+  - name: node_exporter_alerts
+    rules:
+      - alert: NodeExporterUp
+        expr: up{job="node"} == 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node Exporter UP (instance={{ $labels.instance }})"
+          description: "Le service node_exporter (instance {{ $labels.instance }}) ne répond depuis plus de 1 min."
+
+      - alert: NodeExporterDown
+        expr: up{job="node"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: dev
+        annotations:
+          summary: "Node Exporter DOWN (instance={{ $labels.instance }})"
+          description: "Le service node_exporter (instance {{ $labels.instance }}) est inaccessible depuis plus de 2 minutes."
+
+      - alert: NodeExporterDown
+        expr: up{job="node"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: infra
+        annotations:
+          summary: "Node Exporter DOWN (instance={{ $labels.instance }})"
+          description: "Le service node_exporter (instance {{ $labels.instance }}) est inaccessible depuis plus de 2 minutes - Équipe Infra."
+
+  - name: app_alerts
+    rules:
+      - alert: AppErrorRate
+        expr: (rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m])) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Taux d'erreur élevé sur l'application ({{ $value }}%)"
+          description: "L'application a un taux d'erreur de {{ $value }}% sur les 5 dernières minutes, ce qui dépasse le seuil de 5%."
+
+      - alert: AppTooFewRequests
+        expr: rate(http_requests_total[5m]) * 300 < 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Trop peu de requêtes sur l'application"
+          description: "L'application reçoit moins de 1 requête par seconde ({{ $value }} req/5min) depuis plus de 10 minutes."
+

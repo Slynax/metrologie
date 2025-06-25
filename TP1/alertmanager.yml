@@ -1,0 +1,28 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'console'
+  routes:
+    - match:
+        alertname: NodeExporterDown
+      receiver: 'dev-infra-team'
+      continue: true
+
+receivers:
+  - name: 'console'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook'
+
+  - name: 'dev-infra-team'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook/dev'
+        send_resolved: true
+        title: '[DEV] Alerte: {{ .GroupLabels.alertname }}'
+      - url: 'http://localhost:5001/webhook/infra'  
+        send_resolved: true
+        title: '[INFRA] Alerte: {{ .GroupLabels.alertname }}'
